@@ -4,9 +4,9 @@
 export type Lang = 'en' | 'es';
 
 export const CONTACT = {
-  phone: '+1 704-699-4001',
-  phoneHref: 'tel:+17046994001',
-  whatsappHref: 'https://wa.me/17046994001',
+  phone: '+1 7862667459',
+  phoneHref: 'tel:+17862667459',
+  whatsappHref: 'https://wa.me/17862667459',
   formspree: 'https://formspree.io/f/xjkwvwoa',
   location: 'Concord, North Carolina',
 } as const;
