@@ -1,0 +1,98 @@
+---
+import Logo from './Logo.astro';
+import { CONTENT, CONTACT, type Lang } from '../i18n/content';
+
+interface Props { lang: Lang; currentYear: number }
+const { lang, currentYear } = Astro.props;
+const t = CONTENT[lang];
+const nav = t.nav;
+const links = [
+  { href: '#services', label: nav.services },
+  { href: '#how', label: nav.how },
+  { href: '#pricing', label: nav.pricing },
+  { href: '#faq', label: nav.faq },
+];
+---
+
+<footer class="site-footer">
+  <div class="shell footer-inner">
+    <div class="footer-brand">
+      <Logo />
+      <p>{t.footer.tagline}</p>
+      <address class="footer-address">
+        <a href={CONTACT.phoneHref}>{CONTACT.phone}</a>
+        <a href={CONTACT.whatsappHref} target="_blank" rel="noopener">WhatsApp</a>
+        <span>{CONTACT.location}</span>
+      </address>
+    </div>
+
+    <nav class="footer-nav" aria-label={t.footer.nav}>
+      {links.map((l) => <a href={l.href}>{l.label}</a>)}
+      <a href="#quote">{nav.quote}</a>
+    </nav>
+  </div>
+
+  <div class="shell footer-bottom">
+    <p>© {currentYear} Deluxe Move Broker LLC. {t.footer.rights}</p>
+    <!-- TODO_LEGAL: add USDOT/MC broker number and privacy/terms links when provided. -->
+    <p class="footer-note">Concord, NC · United States</p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--line);
+    padding-top: clamp(3rem, 7vw, 5rem);
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom));
+    background: var(--bg);
+  }
+  .footer-inner {
+    display: grid;
+    gap: 2.5rem;
+    padding-bottom: 2.5rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .footer-brand p {
+    color: var(--fg-dim);
+    margin-top: 1rem;
+    max-width: 32ch;
+  }
+  .footer-address {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-top: 1.25rem;
+    font-style: normal;
+    color: var(--fg-dim);
+  }
+  .footer-address a:hover {
+    color: var(--color-amber);
+  }
+  .footer-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem 2rem;
+    align-content: start;
+  }
+  .footer-nav a {
+    color: var(--fg-dim);
+    font-size: var(--text-sm);
+  }
+  .footer-nav a:hover {
+    color: var(--fg);
+  }
+  .footer-bottom {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-top: 1.5rem;
+    font-size: var(--text-xs);
+    color: var(--fg-dim);
+  }
+  @media (min-width: 720px) {
+    .footer-inner {
+      grid-template-columns: 1.4fr 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,152 @@
+---
+import { Image } from 'astro:assets';
+import { CONTENT, type Lang } from '../i18n/content';
+import imgEnclosed from '../assets/transport-enclosed-highway.jpg';
+import imgOpen from '../assets/transport-open-convoy.jpg';
+import imgExotic from '../assets/exotic-car-on-road.jpg';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = CONTENT[lang].services;
+
+const media = [
+  {
+    src: imgEnclosed,
+    alt: lang === 'es' ? 'Tráiler cerrado transportando vehículos por la autopista' : 'Enclosed trailer hauling vehicles on the highway',
+  },
+  {
+    src: imgOpen,
+    alt: lang === 'es' ? 'Convoy de camiones de transporte en ruta al atardecer' : 'Convoy of transport trucks on the road at sunset',
+  },
+  {
+    src: imgExotic,
+    alt: lang === 'es' ? 'Auto deportivo exótico rojo en movimiento' : 'Red exotic sports car in motion',
+  },
+];
+---
+
+<section class="section" id="services">
+  <div class="shell">
+    <header class="sec-head" data-reveal>
+      <p class="eyebrow">{t.eyebrow}</p>
+      <h2>{t.title}</h2>
+      <p class="sec-sub">{t.sub}</p>
+    </header>
+
+    <div class="svc-grid">
+      {t.items.map((item, i) => (
+        <article class={`svc-card ${i === 0 ? 'svc-card--wide' : ''}`} data-reveal>
+          <div class="svc-media">
+            <Image
+              src={media[i].src}
+              alt={media[i].alt}
+              widths={[420, 720, 1040]}
+              sizes="(min-width: 860px) 50vw, 100vw"
+              loading="lazy"
+              format="webp"
+            />
+          </div>
+          <div class="svc-body">
+            <span class="svc-tag">{item.tag}</span>
+            <h3>{item.name}</h3>
+            <p>{item.desc}</p>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .sec-head {
+    max-width: 42rem;
+    margin-bottom: clamp(2.5rem, 6vw, 4rem);
+  }
+  .sec-head h2 {
+    font-size: var(--text-3xl);
+    margin-top: 0.75rem;
+  }
+  .sec-sub {
+    color: var(--fg-dim);
+    font-size: var(--text-lg);
+    margin-top: 1rem;
+  }
+  .svc-grid {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: 1fr;
+  }
+  .svc-card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+    transition: transform var(--dur-base) var(--ease-signature), border-color 0.3s;
+  }
+  .svc-card:hover {
+    transform: translateY(-4px);
+    border-color: color-mix(in srgb, var(--color-amber) 50%, var(--line));
+  }
+  .svc-media {
+    aspect-ratio: 16 / 10;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg);
+  }
+  .svc-media :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.7s var(--ease-signature);
+  }
+  .svc-card:hover .svc-media :global(img) {
+    transform: scale(1.05);
+  }
+  .svc-media::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(to top, color-mix(in srgb, var(--surface) 85%, transparent), transparent 55%);
+    pointer-events: none;
+  }
+  .svc-body {
+    padding: clamp(1.25rem, 3vw, 1.75rem);
+  }
+  .svc-tag {
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    color: var(--color-amber);
+    font-weight: 600;
+  }
+  .svc-body h3 {
+    font-size: var(--text-xl);
+    margin-top: 0.4rem;
+  }
+  .svc-body p {
+    color: var(--fg-dim);
+    margin-top: 0.6rem;
+    max-width: 44ch;
+  }
+  @media (min-width: 860px) {
+    .svc-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+    .svc-card--wide {
+      grid-column: 1 / -1;
+      flex-direction: row;
+    }
+    .svc-card--wide .svc-media {
+      flex: 1 1 55%;
+      aspect-ratio: auto;
+    }
+    .svc-card--wide .svc-body {
+      flex: 1 1 45%;
+      align-self: center;
+    }
+  }
+</style>

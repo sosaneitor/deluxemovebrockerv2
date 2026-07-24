@@ -1,0 +1,52 @@
+---
+import { CONTENT, type Lang } from '../i18n/content';
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const items = CONTENT[lang].marquee;
+const loop = [...items, ...items];
+---
+
+<div class="marquee" aria-hidden="true">
+  <div class="marquee-track">
+    {loop.map((w) => (
+      <span class="marquee-item">{w}<i class="marquee-dot">◆</i></span>
+    ))}
+  </div>
+</div>
+
+<style>
+  .marquee {
+    overflow: hidden;
+    border-block: 1px solid var(--line);
+    padding-block: 1.1rem;
+    background: var(--surface);
+    white-space: nowrap;
+  }
+  .marquee-track {
+    display: inline-flex;
+    gap: 2.5rem;
+    animation: scroll-x 32s linear infinite;
+    will-change: transform;
+  }
+  .marquee-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 2.5rem;
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--fg);
+  }
+  .marquee-dot {
+    color: var(--color-amber);
+    font-size: 0.6rem;
+    font-style: normal;
+  }
+  @keyframes scroll-x {
+    to { transform: translateX(-50%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-track { animation: none; }
+  }
+</style>

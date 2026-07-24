@@ -1,0 +1,16 @@
+# build output
+dist/
+.astro/
+
+# deps
+node_modules/
+
+# env / editor
+.env
+.env.*
+.DS_Store
+*.log
+
+# agent tooling
+.claude/
+.agents/

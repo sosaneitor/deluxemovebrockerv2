@@ -1,0 +1,13 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Landing from '../../components/Landing.astro';
+import { CONTENT } from '../../i18n/content';
+
+const lang = 'es' as const;
+const t = CONTENT[lang];
+const currentYear = new Date().getFullYear();
+---
+
+<BaseLayout lang={lang} title={t.htmlTitle} description={t.metaDescription}>
+  <Landing lang={lang} currentYear={currentYear} />
+</BaseLayout>

@@ -1,0 +1,37 @@
+---
+import Header from './Header.astro';
+import Hero from './Hero.astro';
+import Marquee from './Marquee.astro';
+import Services from './Services.astro';
+import Process from './Process.astro';
+import WhyUs from './WhyUs.astro';
+import Pricing from './Pricing.astro';
+import Reviews from './Reviews.astro';
+import Faq from './Faq.astro';
+import QuoteSection from './QuoteSection.astro';
+import StickyCta from './StickyCta.astro';
+import Footer from './Footer.astro';
+import type { Lang } from '../i18n/content';
+
+interface Props { lang: Lang; currentYear: number }
+const { lang, currentYear } = Astro.props;
+---
+
+<Header lang={lang} />
+<main id="main">
+  <Hero lang={lang} />
+  <Marquee lang={lang} />
+  <Services lang={lang} />
+  <Process lang={lang} />
+  <WhyUs lang={lang} />
+  <Pricing lang={lang} />
+  <Reviews lang={lang} />
+  <Faq lang={lang} />
+  <QuoteSection lang={lang} currentYear={currentYear} />
+</main>
+<Footer lang={lang} currentYear={currentYear} />
+<StickyCta lang={lang} />
+
+<script>
+  import '../scripts/main.js';
+</script>

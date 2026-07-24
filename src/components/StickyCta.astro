@@ -1,0 +1,76 @@
+---
+import { CONTENT, CONTACT, type Lang } from '../i18n/content';
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = CONTENT[lang];
+---
+
+<div class="sticky-cta" id="sticky-cta" aria-hidden="false">
+  <a href={CONTACT.whatsappHref} target="_blank" rel="noopener" class="sticky-wa" aria-label="WhatsApp">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.7 15l-1.3 4.9 5-1.3A10 10 0 1 0 12 2Zm5.8 14.2c-.2.7-1.2 1.3-1.9 1.4-.5.1-1.2.2-3.8-.8-3.2-1.3-5.2-4.6-5.4-4.8-.2-.2-1.3-1.7-1.3-3.3s.8-2.3 1.1-2.6c.3-.3.6-.4.8-.4h.6c.2 0 .5 0 .7.5l.9 2.2c.1.2.1.4 0 .6l-.5.7c-.2.2-.3.4-.1.7.2.3.9 1.5 2 2.4 1.4 1.2 2.1 1.3 2.4 1.2.3-.1.5-.4.7-.7.2-.3.5-.3.8-.2l2.1 1c.3.1.5.2.6.3.1.3.1.9-.2 1.6Z"/></svg>
+  </a>
+  <a href="#quote" class="btn btn-amber sticky-quote">{t.nav.quote}</a>
+</div>
+
+<style>
+  .sticky-cta {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    display: flex;
+    gap: 0.6rem;
+    padding: 0.75rem clamp(1rem, 4vw, 1.5rem);
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--line);
+    transform: translateY(120%);
+    transition: transform 0.4s var(--ease-signature);
+  }
+  .sticky-cta.show {
+    transform: translateY(0);
+  }
+  .sticky-wa {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+    border-radius: var(--radius-full);
+    background: #25d366;
+    color: #0b0d10;
+  }
+  .sticky-quote {
+    flex: 1;
+  }
+  @media (min-width: 900px) {
+    .sticky-cta {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  // Reveal sticky bar after the hero scrolls away; hide it over the quote form.
+  const bar = document.getElementById('sticky-cta');
+  const quote = document.getElementById('quote');
+  let pastHero = false;
+  let overQuote = false;
+  const update = () => bar?.classList.toggle('show', pastHero && !overQuote);
+
+  const hero = document.getElementById('top');
+  if (hero) {
+    new IntersectionObserver(
+      ([e]) => { pastHero = !e.isIntersecting; update(); },
+      { rootMargin: '-40% 0px 0px 0px' }
+    ).observe(hero);
+  }
+  if (quote) {
+    new IntersectionObserver(
+      ([e]) => { overQuote = e.isIntersecting; update(); },
+      { threshold: 0.15 }
+    ).observe(quote);
+  }
+</script>

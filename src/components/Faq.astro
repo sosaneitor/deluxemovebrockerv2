@@ -1,0 +1,109 @@
+---
+import { CONTENT, type Lang } from '../i18n/content';
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = CONTENT[lang].faq;
+
+// FAQPage structured data from the same source as the visible copy.
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: t.items.map((it) => ({
+    '@type': 'Question',
+    name: it.q,
+    acceptedAnswer: { '@type': 'Answer', text: it.a },
+  })),
+};
+---
+
+<section class="section faq" id="faq">
+  <div class="shell faq-shell">
+    <header class="sec-head faq-head" data-reveal>
+      <p class="eyebrow">{t.eyebrow}</p>
+      <h2>{t.title}</h2>
+    </header>
+
+    <div class="faq-list">
+      {t.items.map((it, i) => (
+        <details class="faq-item" data-reveal open={i === 0}>
+          <summary>
+            <span>{it.q}</span>
+            <i class="faq-plus" aria-hidden="true"></i>
+          </summary>
+          <div class="faq-answer"><p>{it.a}</p></div>
+        </details>
+      ))}
+    </div>
+  </div>
+</section>
+
+<script type="application/ld+json" is:inline set:html={JSON.stringify(faqSchema)} />
+
+<style>
+  .faq-shell {
+    display: grid;
+    gap: clamp(2rem, 5vw, 3rem);
+  }
+  .faq-head {
+    margin-bottom: 0;
+  }
+  .faq-list {
+    display: grid;
+    gap: 0.75rem;
+  }
+  .faq-item {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    overflow: hidden;
+  }
+  .faq-item summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    cursor: pointer;
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: 600;
+    list-style: none;
+    min-height: 44px;
+  }
+  .faq-item summary::-webkit-details-marker {
+    display: none;
+  }
+  .faq-plus {
+    position: relative;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+  .faq-plus::before,
+  .faq-plus::after {
+    content: '';
+    position: absolute;
+    background: var(--color-amber);
+    transition: transform 0.3s var(--ease-signature);
+  }
+  .faq-plus::before {
+    top: 8px; left: 0; width: 18px; height: 2px;
+  }
+  .faq-plus::after {
+    top: 0; left: 8px; width: 2px; height: 18px;
+  }
+  .faq-item[open] .faq-plus::after {
+    transform: rotate(90deg) scaleX(0);
+  }
+  .faq-answer {
+    padding: 0 1.5rem 1.4rem;
+    color: var(--fg-dim);
+    max-width: 68ch;
+  }
+  @media (min-width: 820px) {
+    .faq-shell {
+      grid-template-columns: 0.7fr 1.3fr;
+      align-items: start;
+    }
+  }
+</style>

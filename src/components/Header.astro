@@ -1,0 +1,243 @@
+---
+import Logo from './Logo.astro';
+import { CONTENT, CONTACT, type Lang } from '../i18n/content';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = CONTENT[lang].nav;
+const otherLangHref = lang === 'es' ? '/' : '/es/';
+const otherLangLabel = lang === 'es' ? 'EN' : 'ES';
+
+const links = [
+  { href: '#services', label: t.services },
+  { href: '#how', label: t.how },
+  { href: '#why', label: t.why },
+  { href: '#pricing', label: t.pricing },
+  { href: '#reviews', label: t.reviews },
+  { href: '#faq', label: t.faq },
+];
+---
+
+<header class="site-header" id="site-header">
+  <div class="shell header-inner">
+    <a href={lang === 'es' ? '/es/' : '/'} class="header-logo" aria-label="Deluxe Move Broker — home">
+      <Logo />
+    </a>
+
+    <nav class="header-nav" aria-label="Primary">
+      {links.map((l) => <a href={l.href}>{l.label}</a>)}
+    </nav>
+
+    <div class="header-actions">
+      <a href={otherLangHref} class="lang-switch" aria-label={`Switch to ${otherLangLabel}`}>{otherLangLabel}</a>
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" class="i-sun">
+          <circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.8" />
+          <path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+        </svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" class="i-moon">
+          <path d="M20 13.5A8 8 0 1 1 10.5 4a6.5 6.5 0 0 0 9.5 9.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+        </svg>
+      </button>
+      <a href="#quote" class="btn btn-amber header-cta">{t.quote}</a>
+      <button type="button" class="menu-btn" id="menu-btn" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="mobile-menu" id="mobile-menu" hidden>
+    <nav class="shell" aria-label="Mobile">
+      {links.map((l) => <a href={l.href} data-close>{l.label}</a>)}
+      <a href="#quote" class="btn btn-amber btn-full" data-close>{t.quote}</a>
+      <div class="mobile-contact">
+        <a href={CONTACT.phoneHref}>{CONTACT.phone}</a>
+        <a href={otherLangHref}>{otherLangLabel === 'ES' ? 'Español' : 'English'}</a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 50;
+    transition: background-color 0.3s, border-color 0.3s, backdrop-filter 0.3s;
+    border-bottom: 1px solid transparent;
+  }
+  .site-header.scrolled {
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: blur(12px);
+    border-bottom-color: var(--line);
+  }
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 68px;
+    padding-top: env(safe-area-inset-top);
+  }
+  .header-nav {
+    display: none;
+    gap: 1.5rem;
+    font-size: var(--text-sm);
+    font-weight: 500;
+  }
+  .header-nav a {
+    color: var(--fg-dim);
+    transition: color 0.2s;
+  }
+  .header-nav a:hover {
+    color: var(--fg);
+  }
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .lang-switch {
+    display: grid;
+    place-items: center;
+    min-width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--line);
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  .lang-switch:hover {
+    border-color: var(--color-amber);
+    color: var(--color-amber);
+  }
+  .theme-toggle {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--fg);
+    cursor: pointer;
+  }
+  .theme-toggle:hover {
+    border-color: var(--color-amber);
+    color: var(--color-amber);
+  }
+  .i-moon {
+    display: none;
+  }
+  :global(:root[data-theme='light']) .i-sun {
+    display: none;
+  }
+  :global(:root[data-theme='light']) .i-moon {
+    display: block;
+  }
+  .header-cta {
+    display: none;
+    min-height: 40px;
+    padding: 0.55rem 1.1rem;
+    font-size: 0.9rem;
+  }
+  .menu-btn {
+    display: grid;
+    gap: 4px;
+    width: 40px;
+    height: 40px;
+    place-content: center;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    padding: 0;
+  }
+  .menu-btn span {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: var(--fg);
+    transition: transform 0.3s var(--ease-signature), opacity 0.2s;
+  }
+  .menu-btn[aria-expanded='true'] span:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+  }
+  .menu-btn[aria-expanded='true'] span:nth-child(2) {
+    opacity: 0;
+  }
+  .menu-btn[aria-expanded='true'] span:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
+  }
+  .mobile-menu {
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+    padding-block: 1.5rem;
+  }
+  .mobile-menu nav {
+    display: grid;
+    gap: 1rem;
+  }
+  .mobile-menu nav a {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    padding-block: 0.35rem;
+  }
+  .mobile-contact {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+    border-top: 1px solid var(--line);
+    color: var(--fg-dim);
+    font-size: var(--text-sm);
+  }
+  @media (min-width: 900px) {
+    .header-nav {
+      display: flex;
+    }
+    .header-cta {
+      display: inline-flex;
+    }
+    .menu-btn {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  // Header scroll state
+  const header = document.getElementById('site-header');
+  const onScroll = () => header?.classList.toggle('scrolled', window.scrollY > 24);
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  // Theme toggle
+  const toggle = document.getElementById('theme-toggle');
+  toggle?.addEventListener('click', () => {
+    const root = document.documentElement;
+    const isLight = root.dataset.theme === 'light';
+    const next = isLight ? 'dark' : 'light';
+    root.dataset.theme = next;
+    try {
+      localStorage.setItem('theme', next);
+    } catch (e) {}
+  });
+
+  // Mobile menu
+  const menuBtn = document.getElementById('menu-btn');
+  const menu = document.getElementById('mobile-menu');
+  const setMenu = (open: boolean) => {
+    if (!menu || !menuBtn) return;
+    menu.hidden = !open;
+    menuBtn.setAttribute('aria-expanded', String(open));
+    menuBtn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    document.body.style.overflow = open ? 'hidden' : '';
+  };
+  menuBtn?.addEventListener('click', () => setMenu(menu?.hidden ?? true));
+  menu?.querySelectorAll('[data-close]').forEach((el) =>
+    el.addEventListener('click', () => setMenu(false))
+  );
+</script>

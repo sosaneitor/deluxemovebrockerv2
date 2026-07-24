@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# TODO_DOMAIN: sitemap URL follows astro.config `site`. Update if the domain changes.
+Sitemap: https://deluxemovebroker.com/sitemap-index.xml

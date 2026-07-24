@@ -1,0 +1,139 @@
+---
+import '../styles/global.css';
+
+export interface Props {
+  lang: 'en' | 'es';
+  title: string;
+  description: string;
+  /** path without locale prefix, e.g. '' for home */
+  path?: string;
+}
+
+const { lang, title, description, path = '' } = Astro.props;
+const site = Astro.site?.toString().replace(/\/$/, '') ?? '';
+
+const canonical = lang === 'es' ? `${site}/es/${path}` : `${site}/${path}`;
+const cleanCanonical = canonical.replace(/\/+$/, '/');
+
+const alternates = [
+  { hreflang: 'en-US', href: `${site}/` },
+  { hreflang: 'es-US', href: `${site}/es/` },
+  { hreflang: 'x-default', href: `${site}/` },
+];
+
+const ogImage = `${site}/og-image.jpg`;
+
+// ---- Structured data ----
+const phone = '+17046994001';
+const localBusiness = {
+  '@context': 'https://schema.org',
+  '@type': 'MovingCompany',
+  name: 'Deluxe Move Broker LLC',
+  description,
+  url: `${site}/`,
+  telephone: phone,
+  image: ogImage,
+  priceRange: '$$',
+  areaServed: { '@type': 'Country', name: 'United States' },
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'Concord',
+    addressRegion: 'NC',
+    addressCountry: 'US',
+  },
+  contactPoint: {
+    '@type': 'ContactPoint',
+    telephone: phone,
+    contactType: 'customer service',
+    availableLanguage: ['English', 'Spanish'],
+  },
+};
+
+const website = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Deluxe Move Broker LLC',
+  url: `${site}/`,
+  inLanguage: ['en-US', 'es-US'],
+};
+---
+
+<!doctype html>
+<html lang={lang === 'es' ? 'es-US' : 'en-US'}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={cleanCanonical} />
+    {alternates.map((a) => <link rel="alternate" hreflang={a.hreflang} href={a.href} />)}
+
+    <!-- Icons -->
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#0b0d10" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Deluxe Move Broker LLC" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={cleanCanonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content={lang === 'es' ? 'es_US' : 'en_US'} />
+    <meta property="og:locale:alternate" content={lang === 'es' ? 'en_US' : 'es_US'} />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <!-- Fonts: preconnect + swap, subset latin -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap"
+    />
+
+    <!-- Reveal contract: add class ASAP so pre-JS content is not hidden if JS never runs -->
+    <script is:inline>
+      // Only opt into GSAP hide-then-reveal if motion is allowed.
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        document.documentElement.classList.add('gsap-ready');
+      }
+      // Restore theme preference before paint (no flash).
+      try {
+        const t = localStorage.getItem('theme');
+        if (t) document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
+
+    <script type="application/ld+json" is:inline set:html={JSON.stringify(localBusiness)} />
+    <script type="application/ld+json" is:inline set:html={JSON.stringify(website)} />
+    <slot name="head" />
+  </head>
+  <body>
+    <a href="#main" class="sr-skip">Skip to content</a>
+    <slot />
+    <style is:global>
+      .sr-skip {
+        position: absolute;
+        left: -9999px;
+        top: 0;
+        z-index: 100;
+        background: var(--color-amber);
+        color: #0b0d10;
+        padding: 0.6rem 1rem;
+        border-radius: 0 0 var(--radius-sm) 0;
+        font-weight: 600;
+      }
+      .sr-skip:focus {
+        left: 0;
+      }
+    </style>
+  </body>
+</html>

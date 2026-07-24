@@ -1,0 +1,221 @@
+---
+import { Image } from 'astro:assets';
+import { CONTENT, CONTACT, type Lang } from '../i18n/content';
+import heroImg from '../assets/hero-sports-car-night.jpg';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = CONTENT[lang].hero;
+const heroAlt =
+  lang === 'es'
+    ? 'Auto deportivo blanco en un garaje nocturno, listo para transporte'
+    : 'White sports car in a night garage, ready for transport';
+---
+
+<section class="hero" id="top">
+  <!-- 3D atmosphere: canvas mounts over a static poster fallback -->
+  <div class="hero-canvas-wrap">
+    <div class="hero-poster" aria-hidden="true"></div>
+    <Image
+      src={heroImg}
+      alt={heroAlt}
+      class="hero-photo"
+      widths={[640, 1024, 1600, 1920]}
+      sizes="100vw"
+      loading="eager"
+      fetchpriority="high"
+      format="webp"
+    />
+    <canvas id="hero-canvas" data-scene aria-hidden="true"></canvas>
+    <div class="hero-veil" aria-hidden="true"></div>
+  </div>
+
+  <div class="shell hero-inner">
+    <p class="eyebrow" data-reveal>{t.eyebrow}</p>
+
+    <h1 class="hero-title" data-reveal="chars" aria-label={t.title.join(' ')}>
+      {t.title.map((w) => <span class="hero-word"><span>{w}</span></span>)}
+    </h1>
+
+    <p class="hero-sub" data-reveal>{t.sub}</p>
+
+    <div class="hero-cta" data-reveal>
+      <a href="#quote" class="btn btn-amber">{t.cta}</a>
+      <a href={CONTACT.whatsappHref} class="btn btn-ghost" target="_blank" rel="noopener">
+        {t.ctaSecondary}
+      </a>
+    </div>
+
+    <dl class="hero-stats" data-reveal>
+      {t.stat.map((s) => (
+        <div class="hero-stat">
+          <dt>{s.value}</dt>
+          <dd>{s.label}</dd>
+        </div>
+      ))}
+    </dl>
+  </div>
+
+  <a href="#services" class="hero-scroll" aria-label="Scroll">
+    <span></span>
+  </a>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: 100svh;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    padding-top: clamp(6rem, 14vh, 9rem);
+    padding-bottom: 4rem;
+  }
+  .hero-canvas-wrap {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+  .hero-poster,
+  .hero-photo,
+  #hero-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  /* Coded gradient sits behind the photo as ultimate fallback (zero CLS). */
+  .hero-poster {
+    background:
+      radial-gradient(120% 90% at 80% 10%, color-mix(in srgb, var(--color-amber) 22%, transparent), transparent 55%),
+      radial-gradient(90% 80% at 15% 90%, color-mix(in srgb, #2a3550 40%, transparent), transparent 60%),
+      var(--bg);
+  }
+  .hero-photo {
+    object-fit: cover;
+    object-position: 70% center;
+  }
+  #hero-canvas {
+    display: block;
+    opacity: 0;
+    mix-blend-mode: screen;
+    transition: opacity 1.2s var(--ease-signature);
+  }
+  #hero-canvas.is-live {
+    opacity: 0.55;
+  }
+  /* Veil: darken left (where copy sits) + fade into page at the bottom. */
+  .hero-veil {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(105deg, var(--bg) 8%, color-mix(in srgb, var(--bg) 55%, transparent) 42%, transparent 68%),
+      linear-gradient(to bottom, transparent 45%, var(--bg) 97%);
+    pointer-events: none;
+  }
+  :global(:root[data-theme='light']) .hero-photo {
+    filter: none;
+  }
+  .hero-inner {
+    position: relative;
+    z-index: 1;
+    max-width: 62rem;
+  }
+  .hero-title {
+    font-size: var(--text-4xl);
+    font-weight: 700;
+    margin-top: 1.25rem;
+    max-width: 15ch;
+    text-shadow: 0 2px 30px rgba(0, 0, 0, 0.5);
+  }
+  .hero-word {
+    display: inline-block;
+    overflow: hidden;
+    padding-bottom: 0.05em;
+    margin-right: 0.28em;
+  }
+  .hero-word > span {
+    display: inline-block;
+  }
+  .hero-word:last-child > span {
+    color: var(--color-amber);
+  }
+  .hero-sub {
+    font-size: var(--text-lg);
+    color: var(--color-bone);
+    margin-top: 1.5rem;
+    max-width: 34ch;
+    text-shadow: 0 1px 16px rgba(0, 0, 0, 0.7);
+  }
+  :global(:root[data-theme='light']) .hero-sub {
+    color: var(--fg);
+    text-shadow: none;
+  }
+  .hero-cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    margin-top: 2rem;
+  }
+  .hero-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(1.5rem, 5vw, 3.5rem);
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--line);
+  }
+  .hero-stat dt {
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    color: var(--fg);
+  }
+  .hero-stat dd {
+    font-size: var(--text-xs);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--fg-dim);
+    margin-top: 0.25rem;
+  }
+  .hero-scroll {
+    position: absolute;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 26px;
+    height: 42px;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-full);
+    display: none;
+    z-index: 1;
+  }
+  .hero-scroll span {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    width: 3px;
+    height: 8px;
+    border-radius: 2px;
+    background: var(--color-amber);
+    transform: translateX(-50%);
+    animation: scrolldot 1.8s var(--ease-signature) infinite;
+  }
+  @keyframes scrolldot {
+    0%, 100% { opacity: 0; transform: translate(-50%, 0); }
+    40% { opacity: 1; }
+    80% { opacity: 0; transform: translate(-50%, 14px); }
+  }
+  @media (min-width: 768px) {
+    .hero-scroll {
+      display: block;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hero-scroll span {
+      animation: none;
+    }
+  }
+</style>

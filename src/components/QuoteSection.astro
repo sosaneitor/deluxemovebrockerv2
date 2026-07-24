@@ -1,0 +1,99 @@
+---
+import QuoteForm from './QuoteForm.tsx';
+import { CONTENT, CONTACT, type Lang } from '../i18n/content';
+
+interface Props { lang: Lang; currentYear: number }
+const { lang, currentYear } = Astro.props;
+const t = CONTENT[lang];
+---
+
+<section class="section quote" id="quote">
+  <div class="shell quote-shell">
+    <div class="quote-aside" data-reveal>
+      <p class="eyebrow">{t.finalCta.cta}</p>
+      <h2>{t.hero.title.join(' ')}</h2>
+      <p class="quote-lead">{t.hero.sub}</p>
+      <ul class="quote-points">
+        {t.why.items.map((w) => (
+          <li><i aria-hidden="true">✓</i>{w.name}</li>
+        ))}
+      </ul>
+      <div class="quote-direct">
+        <a href={CONTACT.whatsappHref} target="_blank" rel="noopener" class="btn btn-ghost">
+          {t.hero.ctaSecondary}
+        </a>
+        <a href={CONTACT.phoneHref} class="quote-phone">{CONTACT.phone}</a>
+      </div>
+    </div>
+
+    <div class="quote-form" data-reveal>
+      <QuoteForm lang={lang} currentYear={currentYear} client:visible />
+    </div>
+  </div>
+</section>
+
+<style>
+  .quote {
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+  }
+  .quote-shell {
+    display: grid;
+    gap: clamp(2rem, 5vw, 3.5rem);
+    align-items: start;
+  }
+  .quote-aside h2 {
+    font-size: var(--text-2xl);
+    margin-top: 0.75rem;
+    max-width: 14ch;
+  }
+  .quote-lead {
+    color: var(--fg-dim);
+    font-size: var(--text-lg);
+    margin-top: 1rem;
+    max-width: 40ch;
+  }
+  .quote-points {
+    list-style: none;
+    padding: 0;
+    margin-top: 1.75rem;
+    display: grid;
+    gap: 0.75rem;
+  }
+  .quote-points li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 500;
+  }
+  .quote-points i {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--color-amber) 18%, transparent);
+    color: var(--color-amber);
+    font-size: 0.8rem;
+    font-style: normal;
+    flex-shrink: 0;
+  }
+  .quote-direct {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+  }
+  .quote-phone {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: var(--text-lg);
+    color: var(--color-amber);
+  }
+  @media (min-width: 900px) {
+    .quote-shell {
+      grid-template-columns: 0.9fr 1.1fr;
+    }
+  }
+</style>

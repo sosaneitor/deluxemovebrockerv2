@@ -1,0 +1,50 @@
+---
+// Typographic wordmark — placeholder brand logo, trivially swappable.
+// TODO_LOGO: replace this SVG with the client's real logo file when provided.
+interface Props {
+  class?: string;
+}
+const { class: cls = '' } = Astro.props;
+---
+
+<span class={`logo ${cls}`} aria-label="Deluxe Move Broker">
+  <svg viewBox="0 0 40 40" width="34" height="34" aria-hidden="true" class="logo-mark">
+    <rect x="1.5" y="1.5" width="37" height="37" rx="10" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.35" />
+    <!-- stylized carrier chevron -->
+    <path d="M8 26 L20 12 L32 26" fill="none" stroke="var(--color-amber)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M13 28 L20 20 L27 28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.6" />
+  </svg>
+  <span class="logo-word">
+    <b>Deluxe</b><span class="logo-thin">Move Broker</span>
+  </span>
+</span>
+
+<style>
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--fg);
+  }
+  .logo-mark {
+    flex-shrink: 0;
+  }
+  .logo-word {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+    font-family: var(--font-display);
+  }
+  .logo-word b {
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .logo-thin {
+    font-size: 0.62rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--fg-dim);
+    font-weight: 500;
+  }
+</style>

@@ -1,0 +1,90 @@
+---
+import { CONTENT, type Lang } from '../i18n/content';
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = CONTENT[lang].reviews;
+
+// TODO_REVIEWS: testimonials from client brief; text is paraphrased for the site.
+// Confirm exact wording / permission with client before treating as verified quotes.
+const initials = (name: string) => name.split(' ').map((p) => p[0]).join('').slice(0, 2);
+---
+
+<section class="section reviews" id="reviews">
+  <div class="shell">
+    <header class="sec-head" data-reveal>
+      <p class="eyebrow">{t.eyebrow}</p>
+      <h2>{t.title}</h2>
+      <p class="sec-sub">{t.sub}</p>
+    </header>
+
+    <div class="rev-grid">
+      {t.items.map((r) => (
+        <figure class="rev-card" data-reveal>
+          <div class="rev-stars" aria-label="5 out of 5">
+            {[...Array(5)].map(() => <span aria-hidden="true">★</span>)}
+          </div>
+          <blockquote>{r.text}</blockquote>
+          <figcaption>
+            <span class="rev-avatar" aria-hidden="true">{initials(r.name)}</span>
+            <span class="rev-name">{r.name}</span>
+          </figcaption>
+        </figure>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .rev-grid {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: 1fr;
+  }
+  .rev-card {
+    padding: clamp(1.5rem, 3vw, 2rem);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .rev-stars {
+    color: var(--color-amber);
+    letter-spacing: 0.15em;
+    font-size: 0.9rem;
+  }
+  .rev-card blockquote {
+    margin: 0;
+    font-size: var(--text-lg);
+    line-height: 1.5;
+    flex: 1;
+  }
+  .rev-card figcaption {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .rev-avatar {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--color-amber) 16%, transparent);
+    color: var(--color-amber);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+  .rev-name {
+    font-weight: 600;
+    font-family: var(--font-display);
+  }
+  @media (min-width: 700px) {
+    .rev-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>
