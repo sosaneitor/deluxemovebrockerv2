@@ -63,6 +63,9 @@ interface Dict {
     routeFrom: string;
     routeTo: string;
     routePlaceholder: string;
+    zipHint: string;
+    zipNotFound: string;
+    zipPick: string;
     year: string;
     make: string;
     model: string;
@@ -248,7 +251,10 @@ const en: Dict = {
     steps: ['Route', 'Vehicle', 'Contact'],
     routeFrom: 'Pickup location',
     routeTo: 'Delivery location',
-    routePlaceholder: 'City, State',
+    routePlaceholder: 'ZIP code or City, State',
+    zipHint: 'Type a 5-digit ZIP code and we will fill in the city and state.',
+    zipNotFound: 'We could not find that ZIP code. Check it or type the city and state.',
+    zipPick: 'Pick the city for this ZIP code from the list.',
     year: 'Year',
     make: 'Make',
     model: 'Model',
@@ -300,7 +306,7 @@ const en: Dict = {
       },
       {
         h: 'Who we share it with',
-        p: 'We share the details needed to perform your move with the carrier that transports your vehicle. Form submissions are delivered to us through Web3Forms, our form provider. We do not sell your personal information.',
+        p: 'We share the details needed to perform your move with the carrier that transports your vehicle. Form submissions are delivered to us through Web3Forms, our form provider, and ZIP codes typed in the form are looked up with Zippopotam.us to fill in the city and state (only the ZIP code is sent). We do not sell your personal information.',
       },
       {
         h: 'How long we keep it',
@@ -461,7 +467,10 @@ const es: Dict = {
     steps: ['Ruta', 'Vehículo', 'Contacto'],
     routeFrom: 'Lugar de recogida',
     routeTo: 'Lugar de entrega',
-    routePlaceholder: 'Ciudad, Estado',
+    routePlaceholder: 'Código postal o Ciudad, Estado',
+    zipHint: 'Escribe un código postal de 5 dígitos y completamos la ciudad y el estado.',
+    zipNotFound: 'No encontramos ese código postal. Revísalo o escribe la ciudad y el estado.',
+    zipPick: 'Elige de la lista la ciudad de este código postal.',
     year: 'Año',
     make: 'Marca',
     model: 'Modelo',
@@ -513,7 +522,7 @@ const es: Dict = {
       },
       {
         h: 'Con quién la compartimos',
-        p: 'Compartimos los datos necesarios para realizar tu envío con el transportista que mueve tu vehículo. Las solicitudes del formulario nos llegan a través de Web3Forms, nuestro proveedor de formularios. No vendemos tu información personal.',
+        p: 'Compartimos los datos necesarios para realizar tu envío con el transportista que mueve tu vehículo. Las solicitudes del formulario nos llegan a través de Web3Forms, nuestro proveedor de formularios, y los códigos postales que escribes se consultan en Zippopotam.us para completar la ciudad y el estado (solo se envía el código postal). No vendemos tu información personal.',
       },
       {
         h: 'Cuánto tiempo la guardamos',

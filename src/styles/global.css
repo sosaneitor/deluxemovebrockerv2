@@ -490,6 +490,25 @@ select.qf-input {
   display: grid;
   gap: 0.5rem;
 }
+.qf-zip-hint {
+  margin-top: -0.4rem;
+}
+/* Small spinner inside the route input while a ZIP is being looked up. */
+.qf-spinner {
+  position: absolute;
+  right: 0.9rem;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  margin-top: -8px;
+  border: 2px solid color-mix(in srgb, var(--color-amber) 30%, transparent);
+  border-top-color: var(--color-amber);
+  border-radius: 50%;
+  animation: qf-spin 0.7s linear infinite;
+}
+@keyframes qf-spin {
+  to { transform: rotate(360deg); }
+}
 .qf-hint {
   font-size: var(--text-xs);
   color: var(--fg-dim);

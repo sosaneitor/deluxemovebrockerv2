@@ -32,6 +32,25 @@ const EMPTY: FormState = {
 };
 
 const OTHER_MAKE = 'Other';
+const ZIP_RE = /^\d{5}$/;
+type RouteKey = 'from' | 'to';
+
+// ZIP -> "City, ST 12345" via Zippopotam.us (free, no key, CORS-enabled). Cached per session;
+// null means the ZIP does not exist.
+const zipCache = new Map<string, string[] | null>();
+async function lookupZip(zip: string): Promise<string[] | null> {
+  if (zipCache.has(zip)) return zipCache.get(zip)!;
+  const res = await fetch(`https://api.zippopotam.us/us/${zip}`);
+  if (res.status === 404) {
+    zipCache.set(zip, null);
+    return null;
+  }
+  if (!res.ok) throw new Error(`ZIP lookup responded ${res.status}`);
+  const data = (await res.json()) as { places?: { 'place name': string; 'state abbreviation': string }[] };
+  const places = [...new Set((data.places ?? []).map((p) => `${p['place name']}, ${p['state abbreviation']} ${zip}`))];
+  zipCache.set(zip, places);
+  return places;
+}
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // At least 10 digits (U.S. number), allowing +, spaces, dashes and parentheses.
 const isPhone = (v: string) => /^[\d\s()+.-]+$/.test(v) && v.replace(/\D/g, '').length >= 10;
@@ -49,7 +68,13 @@ export default function QuoteForm({ lang, currentYear, privacyHref }: Props) {
   const [form, setForm] = useState<FormState>(EMPTY);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [status, setStatus] = useState<Status>('idle');
-  const [focused, setFocused] = useState<'from' | 'to' | null>(null);
+  const [focused, setFocused] = useState<RouteKey | null>(null);
+  const [zipHits, setZipHits] = useState<Record<RouteKey, string[]>>({ from: [], to: [] });
+  const [zipBad, setZipBad] = useState<Record<RouteKey, boolean>>({ from: false, to: false });
+  const [zipBusy, setZipBusy] = useState<Record<RouteKey, boolean>>({ from: false, to: false });
+  // Latest values, so a slow ZIP response never overwrites what the visitor typed since.
+  const latest = useRef(form);
+  latest.current = form;
   const formRef = useRef<HTMLFormElement>(null);
   const liveRef = useRef<HTMLParagraphElement>(null);
   const honeypotRef = useRef<HTMLInputElement>(null);
@@ -81,6 +106,31 @@ export default function QuoteForm({ lang, currentYear, privacyHref }: Props) {
     setErrors((e) => ({ ...e, [key]: undefined }));
   };
 
+  async function onRouteChange(key: RouteKey, value: string) {
+    set(key, value);
+    setZipHits((z) => ({ ...z, [key]: [] }));
+    setZipBad((z) => ({ ...z, [key]: false }));
+    const zip = value.trim();
+    if (!ZIP_RE.test(zip)) return;
+    setZipBusy((z) => ({ ...z, [key]: true }));
+    try {
+      const places = await lookupZip(zip);
+      if (latest.current[key].trim() !== zip) return; // visitor kept typing
+      if (!places || places.length === 0) {
+        setZipBad((z) => ({ ...z, [key]: true }));
+      } else if (places.length === 1) {
+        set(key, places[0]); // single match: fill it in
+      } else {
+        setZipHits((z) => ({ ...z, [key]: places })); // several towns share this ZIP: let them pick
+        setFocused(key);
+      }
+    } catch {
+      // Lookup unavailable: keep the bare ZIP; it is still useful on the quote.
+    } finally {
+      setZipBusy((z) => ({ ...z, [key]: false }));
+    }
+  }
+
   const suggest = (query: string) =>
     query.trim().length < 1
       ? []
@@ -89,8 +139,11 @@ export default function QuoteForm({ lang, currentYear, privacyHref }: Props) {
   function validateStep(s: number): boolean {
     const e: Partial<Record<keyof FormState, string>> = {};
     if (s === 0) {
-      if (!form.from.trim()) e.from = t.required;
-      if (!form.to.trim()) e.to = t.required;
+      for (const key of ['from', 'to'] as const) {
+        if (!form[key].trim()) e[key] = t.required;
+        else if (zipBad[key]) e[key] = t.zipNotFound;
+        else if (zipHits[key].length) e[key] = t.zipPick;
+      }
     }
     if (s === 1) {
       if (!form.year) e.year = t.required;
@@ -214,19 +267,26 @@ export default function QuoteForm({ lang, currentYear, privacyHref }: Props) {
       {step === 0 && (
         <div className="qf-body">
           {(['from', 'to'] as const).map((key) => (
-            <Field key={key} label={key === 'from' ? t.routeFrom : t.routeTo} error={errors[key]} htmlFor={`qf-${key}`}>
+            <Field key={key} label={key === 'from' ? t.routeFrom : t.routeTo} error={errors[key] ?? (zipBad[key] ? t.zipNotFound : undefined)} htmlFor={`qf-${key}`}>
               <input
                 id={`qf-${key}`} className="qf-input" autoComplete="off" value={form[key]}
                 placeholder={t.routePlaceholder}
-                aria-invalid={errors[key] ? true : undefined}
-                onChange={(e) => set(key, e.target.value)}
+                aria-invalid={errors[key] || zipBad[key] ? true : undefined}
+                aria-busy={zipBusy[key] || undefined}
+                onChange={(e) => onRouteChange(key, e.target.value)}
                 onFocus={() => setFocused(key)}
                 onBlur={() => setTimeout(() => setFocused(null), 120)}
                 onKeyDown={(e) => e.key === 'Escape' && setFocused(null)}
               />
-              <Suggestions items={suggest(form[key])} show={focused === key} onPick={(v) => { set(key, v); setFocused(null); }} />
+              {zipBusy[key] && <span className="qf-spinner" aria-hidden="true" />}
+              <Suggestions
+                items={zipHits[key].length ? zipHits[key] : suggest(form[key])}
+                show={focused === key}
+                onPick={(v) => { set(key, v); setZipHits((z) => ({ ...z, [key]: [] })); setFocused(null); }}
+              />
             </Field>
           ))}
+          <p className="qf-hint qf-zip-hint">{t.zipHint}</p>
         </div>
       )}
 
