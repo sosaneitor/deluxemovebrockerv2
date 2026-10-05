@@ -1,9 +1,9 @@
 ---
 import { Image } from 'astro:assets';
 import { CONTENT, type Lang } from '../i18n/content';
-import imgEnclosed from '../assets/transport-enclosed-highway.jpg';
-import imgOpen from '../assets/transport-open-convoy.jpg';
-import imgExotic from '../assets/exotic-car-on-road.jpg';
+import imgEnclosed from '../assets/service-enclosed-trailer.png';
+import imgOpen from '../assets/service-open-carrier.png';
+import imgLocal from '../assets/service-local-storage.png';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
@@ -12,15 +12,15 @@ const t = CONTENT[lang].services;
 const media = [
   {
     src: imgEnclosed,
-    alt: lang === 'es' ? 'Tráiler cerrado transportando vehículos por la autopista' : 'Enclosed trailer hauling vehicles on the highway',
+    alt: lang === 'es' ? 'Auto clásico subiendo por la rampa a un tráiler cerrado al atardecer' : 'Classic car loading up the ramp into an enclosed trailer at sunset',
   },
   {
     src: imgOpen,
-    alt: lang === 'es' ? 'Convoy de camiones de transporte en ruta al atardecer' : 'Convoy of transport trucks on the road at sunset',
+    alt: lang === 'es' ? 'Camión portaautos abierto de dos pisos cargado de vehículos en la carretera' : 'Two-level open car carrier loaded with vehicles on the highway',
   },
   {
-    src: imgExotic,
-    alt: lang === 'es' ? 'Auto deportivo exótico rojo en movimiento' : 'Red exotic sports car in motion',
+    src: imgLocal,
+    alt: lang === 'es' ? 'Grúa plataforma cargando un sedán frente a una bodega de almacenaje con montacargas' : 'Flatbed tow truck loading a sedan in front of a vehicle storage warehouse with a forklift',
   },
 ];
 ---
@@ -36,11 +36,11 @@ const media = [
     <div class="svc-grid">
       {t.items.map((item, i) => (
         <article class={`svc-card ${i === 0 ? 'svc-card--wide' : ''}`} data-reveal>
-          <div class="svc-media">
+          <div class="svc-media" data-wipe>
             <Image
               src={media[i].src}
               alt={media[i].alt}
-              widths={[420, 720, 1040]}
+              widths={[420, 720, 1040, 1400]}
               sizes="(min-width: 860px) 50vw, 100vw"
               loading="lazy"
               format="webp"
@@ -58,19 +58,6 @@ const media = [
 </section>
 
 <style>
-  .sec-head {
-    max-width: 42rem;
-    margin-bottom: clamp(2.5rem, 6vw, 4rem);
-  }
-  .sec-head h2 {
-    font-size: var(--text-3xl);
-    margin-top: 0.75rem;
-  }
-  .sec-sub {
-    color: var(--fg-dim);
-    font-size: var(--text-lg);
-    margin-top: 1rem;
-  }
   .svc-grid {
     display: grid;
     gap: 1.25rem;

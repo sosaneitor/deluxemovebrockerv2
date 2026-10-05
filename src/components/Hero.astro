@@ -1,7 +1,7 @@
 ---
 import { Image } from 'astro:assets';
-import { CONTENT, CONTACT, type Lang } from '../i18n/content';
-import heroImg from '../assets/hero-sports-car-night.jpg';
+import { CONTENT, whatsappHref, type Lang } from '../i18n/content';
+import heroImg from '../assets/hero-car-carrier-highway.png';
 
 interface Props {
   lang: Lang;
@@ -10,12 +10,11 @@ const { lang } = Astro.props;
 const t = CONTENT[lang].hero;
 const heroAlt =
   lang === 'es'
-    ? 'Auto deportivo blanco en un garaje nocturno, listo para transporte'
-    : 'White sports car in a night garage, ready for transport';
+    ? 'Camión portaautos cargado de vehículos en la autopista al anochecer'
+    : 'Car carrier truck loaded with vehicles on the highway at dusk';
 ---
 
 <section class="hero" id="top">
-  <!-- 3D atmosphere: canvas mounts over a static poster fallback -->
   <div class="hero-canvas-wrap">
     <div class="hero-poster" aria-hidden="true"></div>
     <Image
@@ -28,30 +27,32 @@ const heroAlt =
       fetchpriority="high"
       format="webp"
     />
-    <canvas id="hero-canvas" data-scene aria-hidden="true"></canvas>
     <div class="hero-veil" aria-hidden="true"></div>
+    <canvas class="hero-canvas" data-highway aria-hidden="true"></canvas>
   </div>
 
   <div class="shell hero-inner">
-    <p class="eyebrow" data-reveal>{t.eyebrow}</p>
+    <p class="eyebrow">{t.eyebrow}</p>
 
-    <h1 class="hero-title" data-reveal="chars" aria-label={t.title.join(' ')}>
-      {t.title.map((w) => <span class="hero-word"><span>{w}</span></span>)}
+    <h1 class="hero-title" data-split aria-label={t.title.join(' ')}>
+      {t.title.map((w, i) => (
+        <span class:list={['hero-word', { 'hero-accent': i === t.title.length - 1 }]} data-word aria-hidden="true">{w}</span>
+      ))}
     </h1>
 
-    <p class="hero-sub" data-reveal>{t.sub}</p>
+    <p class="hero-sub">{t.sub}</p>
 
-    <div class="hero-cta" data-reveal>
+    <div class="hero-cta">
       <a href="#quote" class="btn btn-amber">{t.cta}</a>
-      <a href={CONTACT.whatsappHref} class="btn btn-ghost" target="_blank" rel="noopener">
+      <a href={whatsappHref(lang)} class="btn btn-ghost" target="_blank" rel="noopener">
         {t.ctaSecondary}
       </a>
     </div>
 
-    <dl class="hero-stats" data-reveal>
+    <dl class="hero-stats">
       {t.stat.map((s) => (
         <div class="hero-stat">
-          <dt>{s.value}</dt>
+          <dt data-count>{s.value}</dt>
           <dd>{s.label}</dd>
         </div>
       ))}
@@ -79,8 +80,7 @@ const heroAlt =
     z-index: 0;
   }
   .hero-poster,
-  .hero-photo,
-  #hero-canvas {
+  .hero-photo {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -97,31 +97,40 @@ const heroAlt =
     object-fit: cover;
     object-position: 70% center;
   }
-  #hero-canvas {
-    display: block;
-    opacity: 0;
-    mix-blend-mode: screen;
-    transition: opacity 1.2s var(--ease-signature);
-  }
-  #hero-canvas.is-live {
-    opacity: 0.55;
-  }
   /* Veil: darken left (where copy sits) + fade into page at the bottom. */
   .hero-veil {
     position: absolute;
     inset: 0;
-    background:
-      linear-gradient(105deg, var(--bg) 8%, color-mix(in srgb, var(--bg) 55%, transparent) 42%, transparent 68%),
-      linear-gradient(to bottom, transparent 45%, var(--bg) 97%);
+    /* Mobile: copy spans the full width, so darken top-to-bottom. */
+    background: linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--bg) 82%, transparent) 0%,
+      color-mix(in srgb, var(--bg) 55%, transparent) 50%,
+      var(--bg) 97%
+    );
     pointer-events: none;
   }
-  :global(:root[data-theme='light']) .hero-photo {
-    filter: none;
+  @media (min-width: 768px) {
+    .hero-veil {
+      background:
+        linear-gradient(105deg, var(--bg) 8%, color-mix(in srgb, var(--bg) 55%, transparent) 42%, transparent 68%),
+        linear-gradient(to bottom, transparent 45%, var(--bg) 97%);
+    }
   }
   .hero-inner {
     position: relative;
     z-index: 1;
     max-width: 62rem;
+  }
+  /* CSS-only entrance (H1 excluded: it is the LCP element and paints at once). */
+  .hero-inner > :not(.hero-title) {
+    animation: hero-in 0.7s var(--ease-signature) both;
+  }
+  .hero-inner > :nth-child(3) { animation-delay: 0.45s; }
+  .hero-inner > :nth-child(4) { animation-delay: 0.6s; }
+  .hero-inner > :nth-child(5) { animation-delay: 0.75s; }
+  @keyframes hero-in {
+    from { opacity: 0; transform: translateY(16px); }
   }
   .hero-title {
     font-size: var(--text-4xl);
@@ -130,17 +139,43 @@ const heroAlt =
     max-width: 15ch;
     text-shadow: 0 2px 30px rgba(0, 0, 0, 0.5);
   }
+  /* Words never break mid-word; each one masks its rising characters. */
   .hero-word {
     display: inline-block;
     overflow: hidden;
-    padding-bottom: 0.05em;
-    margin-right: 0.28em;
+    vertical-align: top;
+    padding-bottom: 0.08em;
+    margin-bottom: -0.08em;
+    margin-right: 0.26em;
   }
-  .hero-word > span {
+  .hero-word:last-child {
+    margin-right: 0;
+  }
+  .hero-word :global(.char) {
     display: inline-block;
+    will-change: transform, opacity;
   }
-  .hero-word:last-child > span {
+  .hero-accent {
     color: var(--color-amber);
+  }
+  .hero-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 1.6s var(--ease-signature);
+    pointer-events: none;
+  }
+  .hero-canvas:global(.is-live) {
+    opacity: 1;
+  }
+  /* Slow push-in on load (wrapper, so GSAP can own the photo's own transform). */
+  .hero-canvas-wrap {
+    animation: hero-push 2.4s var(--ease-signature) both;
+  }
+  @keyframes hero-push {
+    from { transform: scale(1.12); }
   }
   .hero-sub {
     font-size: var(--text-lg);
@@ -148,10 +183,6 @@ const heroAlt =
     margin-top: 1.5rem;
     max-width: 34ch;
     text-shadow: 0 1px 16px rgba(0, 0, 0, 0.7);
-  }
-  :global(:root[data-theme='light']) .hero-sub {
-    color: var(--fg);
-    text-shadow: none;
   }
   .hero-cta {
     display: flex;

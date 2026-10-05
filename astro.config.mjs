@@ -4,8 +4,7 @@ import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 
-// TODO_DOMAIN: replace with the real production domain once available.
-const SITE = 'https://deluxemovebroker.com';
+const SITE = 'https://deluxemovebrokerllc.com';
 
 // https://astro.build/config
 export default defineConfig({
@@ -13,6 +12,7 @@ export default defineConfig({
   integrations: [
     react(),
     sitemap({
+      filter: (page) => !page.includes('/404'),
       i18n: {
         defaultLocale: 'en',
         locales: { en: 'en-US', es: 'es-US' },

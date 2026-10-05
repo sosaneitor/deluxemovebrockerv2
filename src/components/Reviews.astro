@@ -1,11 +1,12 @@
 ---
+import { Image } from 'astro:assets';
 import { CONTENT, type Lang } from '../i18n/content';
+import deliveryImg from '../assets/delivery-handover.png';
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 const t = CONTENT[lang].reviews;
 
-// TODO_REVIEWS: testimonials from client brief; text is paraphrased for the site.
-// Confirm exact wording / permission with client before treating as verified quotes.
+// Testimonial wording approved by the client (Oct 2026).
 const initials = (name: string) => name.split(' ').map((p) => p[0]).join('').slice(0, 2);
 ---
 
@@ -17,10 +18,22 @@ const initials = (name: string) => name.split(' ').map((p) => p[0]).join('').sli
       <p class="sec-sub">{t.sub}</p>
     </header>
 
+    <div class="rev-media" data-wipe>
+      <Image
+        src={deliveryImg}
+        alt={t.imageAlt}
+        widths={[480, 800, 1200, 1600]}
+        sizes="(min-width: 1240px) 1180px, 100vw"
+        loading="lazy"
+        format="webp"
+        data-parallax
+      />
+    </div>
+
     <div class="rev-grid">
       {t.items.map((r) => (
-        <figure class="rev-card" data-reveal>
-          <div class="rev-stars" aria-label="5 out of 5">
+        <figure class="rev-card" data-reveal data-spotlight>
+          <div class="rev-stars" role="img" aria-label={lang === 'es' ? '5 de 5 estrellas' : '5 out of 5 stars'}>
             {[...Array(5)].map(() => <span aria-hidden="true">★</span>)}
           </div>
           <blockquote>{r.text}</blockquote>
@@ -35,6 +48,33 @@ const initials = (name: string) => name.split(' ').map((p) => p[0]).join('').sli
 </section>
 
 <style>
+  .rev-media {
+    aspect-ratio: 4 / 3;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--line);
+    margin-bottom: 1.25rem;
+    background: var(--surface);
+  }
+  .rev-media {
+    position: relative;
+  }
+  /* Taller than the frame so the parallax drift never shows an edge. */
+  .rev-media :global(img) {
+    position: absolute;
+    top: -7%;
+    left: 0;
+    width: 100%;
+    height: 114%;
+    object-fit: cover;
+    object-position: 60% 40%;
+    display: block;
+  }
+  @media (min-width: 700px) {
+    .rev-media {
+      aspect-ratio: 21 / 9;
+    }
+  }
   .rev-grid {
     display: grid;
     gap: 1.25rem;

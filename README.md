@@ -4,7 +4,8 @@ Experience-first landing for a U.S. door-to-door vehicle transport broker.
 Bilingual (EN `/`, ES `/es/`), mobile-first, with a 3-step quote form.
 
 **Stack:** Astro (SSG, zero-JS by default) · Tailwind CSS v4 · React island (quote
-form) · GSAP (scroll reveals) · Three.js (hero atmosphere, dynamically imported).
+form) · GSAP (scroll reveals) · self-hosted variable fonts (Inter, Space Grotesk).
+Deployed on Vercel at https://deluxemovebrokerllc.com.
 
 ## Run
 
@@ -28,30 +29,25 @@ node scripts/gen-assets.mjs
 
 ## Design decisions
 
-- **3D:** hero particle field (light streaks) via Three.js, dynamically imported on
-  scroll. Falls back to the static hero photo when WebGL is absent, on small mobile,
-  low-core devices, Save-Data, or `prefers-reduced-motion`.
-- **Motion:** all reveals go through `gsap.matchMedia()`; reduced-motion shows final
+- **Hero:** static photo + CSS entrance; the H1 is never hidden, so it paints at once (LCP).
+- **Motion:** scroll reveals go through `gsap.matchMedia()`; reduced-motion shows final
   state, no movement. Content is only hidden once `.gsap-ready` is set, so if JS
   fails everything stays visible.
-- **Form:** posts JSON to Formspree; 3-step wizard blocks advancing until the current
-  step validates; success/error message + reset on submit.
+- **Form:** 3-step wizard posting JSON to Web3Forms (honeypot `botcheck`, phone/email
+  validation). Hydrated with `client:load` so typing is never lost to hydration.
+- **Theme:** single dark theme (the light theme was removed — it broke hero contrast).
 
-## TODO (needs client input)
+## Pending (needs client input)
 
-- `TODO_DOMAIN` — set the real domain in [astro.config.mjs](astro.config.mjs) `site`
-  and [public/robots.txt](public/robots.txt).
 - `TODO_LOGO` — replace the placeholder SVG wordmark in
-  [src/components/Logo.astro](src/components/Logo.astro).
-- `TODO_REVIEWS` — testimonial wording is paraphrased from the brief; confirm exact
-  text / permission with the named customers.
-- `TODO_LEGAL` — add USDOT/MC broker number + privacy/terms links in
-  [src/components/Footer.astro](src/components/Footer.astro).
+  [src/components/Logo.astro](src/components/Logo.astro) (drop the file in `src/assets/brand/`).
+- Street address — footer and schema show "Concord, North Carolina" until it is provided.
 
-## Real data wired in
+## Business data
 
-- Phone / WhatsApp: **+1 704-699-4001** (`tel:` + `wa.me`)
-- Quotes inbox: Formspree `https://formspree.io/f/xjkwvwoa`
-- Location: Concord, North Carolina
+- Phone / WhatsApp: **+1 (786) 266-7459** · Email: **deluxemovebroker@gmail.com**
+- Hours: Mon–Sat, 8 AM – 8 PM ET · Location: Concord, North Carolina
+- Quotes inbox: Web3Forms (access key in [src/i18n/content.ts](src/i18n/content.ts)),
+  delivered to deluxemovebroker@gmail.com.
 
 Image sources: see [CREDITS.md](CREDITS.md).

@@ -1,12 +1,15 @@
 ---
-import { CONTENT, CONTACT, type Lang } from '../i18n/content';
+import { CONTENT, CONTACT, whatsappHref, type Lang } from '../i18n/content';
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 const t = CONTENT[lang];
 ---
 
-<div class="sticky-cta" id="sticky-cta" aria-hidden="false">
-  <a href={CONTACT.whatsappHref} target="_blank" rel="noopener" class="sticky-wa" aria-label="WhatsApp">
+<div class="sticky-cta" id="sticky-cta">
+  <a href={CONTACT.phoneHref} class="sticky-icon sticky-call" aria-label={`${t.nav.call} ${CONTACT.phone}`}>
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+  </a>
+  <a href={whatsappHref(lang)} target="_blank" rel="noopener" class="sticky-icon sticky-wa" aria-label="WhatsApp">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.7 15l-1.3 4.9 5-1.3A10 10 0 1 0 12 2Zm5.8 14.2c-.2.7-1.2 1.3-1.9 1.4-.5.1-1.2.2-3.8-.8-3.2-1.3-5.2-4.6-5.4-4.8-.2-.2-1.3-1.7-1.3-3.3s.8-2.3 1.1-2.6c.3-.3.6-.4.8-.4h.6c.2 0 .5 0 .7.5l.9 2.2c.1.2.1.4 0 .6l-.5.7c-.2.2-.3.4-.1.7.2.3.9 1.5 2 2.4 1.4 1.2 2.1 1.3 2.4 1.2.3-.1.5-.4.7-.7.2-.3.5-.3.8-.2l2.1 1c.3.1.5.2.6.3.1.3.1.9-.2 1.6Z"/></svg>
   </a>
   <a href="#quote" class="btn btn-amber sticky-quote">{t.nav.quote}</a>
@@ -32,13 +35,19 @@ const t = CONTENT[lang];
   .sticky-cta.show {
     transform: translateY(0);
   }
-  .sticky-wa {
+  .sticky-icon {
     display: grid;
     place-items: center;
     width: 52px;
     height: 52px;
     flex-shrink: 0;
     border-radius: var(--radius-full);
+  }
+  .sticky-call {
+    border: 1px solid var(--line);
+    color: var(--color-amber);
+  }
+  .sticky-wa {
     background: #25d366;
     color: #0b0d10;
   }

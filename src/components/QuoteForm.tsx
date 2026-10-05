@@ -1,11 +1,12 @@
-import { useMemo, useRef, useState } from 'react';
-import { CONTACT, CONTENT, type Lang } from '../i18n/content';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { CONTACT, CONTENT, whatsappHref, type Lang } from '../i18n/content';
 import { VEHICLE_MAKES, VEHICLE_MAKE_NAMES, buildYears } from '../data/vehicles';
 import { US_LOCATIONS } from '../data/locations';
 
 interface Props {
   lang: Lang;
   currentYear: number;
+  privacyHref: string;
 }
 
 type Status = 'idle' | 'sending' | 'success' | 'error';
@@ -15,7 +16,7 @@ interface FormState {
   to: string;
   year: string;
   make: string;
-  model: string;
+  model: string; // free text "make and model" when make is "Other"
   enclosed: 'yes' | 'no' | '';
   runs: 'yes' | 'no' | '';
   date: string;
@@ -30,9 +31,18 @@ const EMPTY: FormState = {
   date: '', name: '', email: '', phone: '', prefer: '',
 };
 
+const OTHER_MAKE = 'Other';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// At least 10 digits (U.S. number), allowing +, spaces, dashes and parentheses.
+const isPhone = (v: string) => /^[\d\s()+.-]+$/.test(v) && v.replace(/\D/g, '').length >= 10;
 
-export default function QuoteForm({ lang, currentYear }: Props) {
+// Local YYYY-MM-DD, so the pickup date can't be in the past.
+const today = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+export default function QuoteForm({ lang, currentYear, privacyHref }: Props) {
   const t = CONTENT[lang].form;
   const years = useMemo(() => buildYears(currentYear), [currentYear]);
   const [step, setStep] = useState(0);
@@ -40,9 +50,26 @@ export default function QuoteForm({ lang, currentYear }: Props) {
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [status, setStatus] = useState<Status>('idle');
   const [focused, setFocused] = useState<'from' | 'to' | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const liveRef = useRef<HTMLParagraphElement>(null);
+  const honeypotRef = useRef<HTMLInputElement>(null);
+  const firstRender = useRef(true);
 
-  const models = form.make ? VEHICLE_MAKES[form.make] ?? [] : [];
+  const isOther = form.make === OTHER_MAKE;
+  const models = form.make && !isOther ? VEHICLE_MAKES[form.make] ?? [] : [];
+  const vehicle = isOther ? `${form.year} ${form.model}` : `${form.year} ${form.make} ${form.model}`;
+
+  // On step change: announce it to screen readers and bring the top of the form back into
+  // view (on phones the "Next" button sits far below where the next step starts).
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    if (liveRef.current) liveRef.current.textContent = `${step + 1}/3 · ${t.steps[step]}`;
+    const top = formRef.current?.getBoundingClientRect().top ?? 0;
+    if (top < 0) formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [step]);
 
   const set = (key: keyof FormState, value: string) => {
     setForm((f) => {
@@ -68,7 +95,7 @@ export default function QuoteForm({ lang, currentYear }: Props) {
     if (s === 1) {
       if (!form.year) e.year = t.required;
       if (!form.make) e.make = t.required;
-      if (!form.model) e.model = t.required;
+      if (!form.model.trim()) e.model = t.required;
       if (!form.enclosed) e.enclosed = t.required;
       if (!form.runs) e.runs = t.required;
     }
@@ -76,8 +103,9 @@ export default function QuoteForm({ lang, currentYear }: Props) {
       if (!form.date) e.date = t.required;
       if (!form.name.trim()) e.name = t.required;
       if (!form.email.trim()) e.email = t.required;
-      else if (!EMAIL_RE.test(form.email)) e.email = t.invalidEmail;
+      else if (!EMAIL_RE.test(form.email.trim())) e.email = t.invalidEmail;
       if (!form.phone.trim()) e.phone = t.required;
+      else if (!isPhone(form.phone.trim())) e.phone = t.invalidPhone;
       if (!form.prefer) e.prefer = t.required;
     }
     setErrors(e);
@@ -91,33 +119,50 @@ export default function QuoteForm({ lang, currentYear }: Props) {
     setStep((s) => Math.max(s - 1, 0));
   }
 
+  function succeed() {
+    setStatus('success');
+    setForm(EMPTY);
+    setStep(0);
+  }
+
   async function submit(ev: React.FormEvent) {
     ev.preventDefault();
     if (!validateStep(2)) return;
+    // Bots fill the hidden field; pretend success so they get no signal to retry.
+    if (honeypotRef.current?.value) {
+      succeed();
+      return;
+    }
     setStatus('sending');
     try {
+      // Web3Forms: the access key routes the email to the inbox it was created for;
+      // `email` becomes the reply-to, so the owner can answer the customer directly.
       const payload = {
-        _subject: `New quote request — ${form.year} ${form.make} ${form.model}`,
+        access_key: CONTACT.web3formsKey,
+        subject: `New quote request — ${form.from} → ${form.to} · ${vehicle}`,
+        from_name: 'Deluxe Move Broker website',
         Route: `${form.from} → ${form.to}`,
-        Vehicle: `${form.year} ${form.make} ${form.model}`,
+        Vehicle: vehicle,
         Enclosed: form.enclosed === 'yes' ? 'Yes' : 'No',
         Runs: form.runs === 'yes' ? 'Yes' : 'No',
         'Pickup date': form.date,
-        Name: form.name,
-        email: form.email,
-        Phone: form.phone,
+        Name: form.name.trim(),
+        email: form.email.trim(),
+        Phone: form.phone.trim(),
         'Preferred contact': form.prefer,
         Language: lang,
+        Page: window.location.href,
       };
-      const res = await fetch(CONTACT.formspree, {
+      const res = await fetch(CONTACT.formEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error('bad status');
-      setStatus('success');
-      setForm(EMPTY);
-      setStep(0);
+      const result = (await res.json().catch(() => ({}))) as { success?: boolean };
+      if (!res.ok || result.success !== true) throw new Error(`Form endpoint responded ${res.status}`);
+      succeed();
+      const gtag = (window as Window & { gtag?: (...args: unknown[]) => void }).gtag;
+      if (gtag) gtag('event', 'generate_lead', { page_language: lang });
     } catch {
       setStatus('error');
     }
@@ -126,24 +171,39 @@ export default function QuoteForm({ lang, currentYear }: Props) {
   if (status === 'success') {
     return (
       <div className="qf-panel qf-result" role="status" aria-live="polite">
-        <div className="qf-check" aria-hidden="true">✓</div>
+        <div className="qf-check" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        </div>
         <p>{t.success}</p>
-        <button type="button" className="btn btn-ghost" onClick={() => setStatus('idle')}>
-          {t.heading}
-        </button>
+        <div className="qf-result-actions">
+          <a href={whatsappHref(lang)} target="_blank" rel="noopener" className="btn btn-amber">{t.successCta}</a>
+          <button type="button" className="btn btn-ghost" onClick={() => setStatus('idle')}>
+            {t.again}
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <form className="qf-panel" onSubmit={submit} noValidate>
+    <form ref={formRef} className="qf-panel" onSubmit={submit} noValidate>
+      <div className="qf-hp" aria-hidden="true">
+        <label>
+          Leave this field empty
+          <input ref={honeypotRef} type="text" name="botcheck" tabIndex={-1} autoComplete="off" />
+        </label>
+      </div>
       <header className="qf-head">
         <h3>{t.heading}</h3>
         <p>{t.sub}</p>
-        <ol className="qf-steps" aria-label={t.steps.join(', ')}>
+        <ol className="qf-steps">
           {t.steps.map((label, i) => (
-            <li key={label} className={i === step ? 'is-active' : i < step ? 'is-done' : ''}>
-              <span className="qf-dot">{i < step ? '✓' : i + 1}</span>
+            <li
+              key={label}
+              className={i === step ? 'is-active' : i < step ? 'is-done' : ''}
+              aria-current={i === step ? 'step' : undefined}
+            >
+              <span className="qf-dot" aria-hidden="true">{i < step ? '✓' : i + 1}</span>
               <span className="qf-step-label">{label}</span>
             </li>
           ))}
@@ -153,26 +213,20 @@ export default function QuoteForm({ lang, currentYear }: Props) {
       {/* STEP 1 — Route */}
       {step === 0 && (
         <div className="qf-body">
-          <Field label={t.routeFrom} error={errors.from} htmlFor="qf-from">
-            <input
-              id="qf-from" className="qf-input" autoComplete="off" value={form.from}
-              placeholder={t.routePlaceholder}
-              onChange={(e) => set('from', e.target.value)}
-              onFocus={() => setFocused('from')}
-              onBlur={() => setTimeout(() => setFocused(null), 120)}
-            />
-            <Suggestions items={suggest(form.from)} show={focused === 'from'} onPick={(v) => set('from', v)} />
-          </Field>
-          <Field label={t.routeTo} error={errors.to} htmlFor="qf-to">
-            <input
-              id="qf-to" className="qf-input" autoComplete="off" value={form.to}
-              placeholder={t.routePlaceholder}
-              onChange={(e) => set('to', e.target.value)}
-              onFocus={() => setFocused('to')}
-              onBlur={() => setTimeout(() => setFocused(null), 120)}
-            />
-            <Suggestions items={suggest(form.to)} show={focused === 'to'} onPick={(v) => set('to', v)} />
-          </Field>
+          {(['from', 'to'] as const).map((key) => (
+            <Field key={key} label={key === 'from' ? t.routeFrom : t.routeTo} error={errors[key]} htmlFor={`qf-${key}`}>
+              <input
+                id={`qf-${key}`} className="qf-input" autoComplete="off" value={form[key]}
+                placeholder={t.routePlaceholder}
+                aria-invalid={errors[key] ? true : undefined}
+                onChange={(e) => set(key, e.target.value)}
+                onFocus={() => setFocused(key)}
+                onBlur={() => setTimeout(() => setFocused(null), 120)}
+                onKeyDown={(e) => e.key === 'Escape' && setFocused(null)}
+              />
+              <Suggestions items={suggest(form[key])} show={focused === key} onPick={(v) => { set(key, v); setFocused(null); }} />
+            </Field>
+          ))}
         </div>
       )}
 
@@ -192,12 +246,19 @@ export default function QuoteForm({ lang, currentYear }: Props) {
                 {VEHICLE_MAKE_NAMES.map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
             </Field>
-            <Field label={t.model} error={errors.model} htmlFor="qf-model">
-              <select id="qf-model" className="qf-input" value={form.model} disabled={!form.make} onChange={(e) => set('model', e.target.value)}>
-                <option value="">{t.selectModel}</option>
-                {models.map((m) => <option key={m} value={m}>{m}</option>)}
-              </select>
-            </Field>
+            {isOther ? (
+              <Field label={t.otherVehicle} error={errors.model} htmlFor="qf-model">
+                <input id="qf-model" className="qf-input" value={form.model} placeholder={t.otherVehiclePlaceholder}
+                  maxLength={80} onChange={(e) => set('model', e.target.value)} />
+              </Field>
+            ) : (
+              <Field label={t.model} error={errors.model} htmlFor="qf-model">
+                <select id="qf-model" className="qf-input" value={form.model} disabled={!form.make} onChange={(e) => set('model', e.target.value)}>
+                  <option value="">{t.selectModel}</option>
+                  {models.map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </Field>
+            )}
           </div>
           <Toggle label={t.enclosed} hint={t.enclosedHint} error={errors.enclosed} value={form.enclosed}
             yes={t.yes} no={t.no} onChange={(v) => set('enclosed', v)} name="enclosed" />
@@ -210,18 +271,18 @@ export default function QuoteForm({ lang, currentYear }: Props) {
       {step === 2 && (
         <div className="qf-body">
           <Field label={t.date} error={errors.date} htmlFor="qf-date">
-            <input id="qf-date" className="qf-input" type="date" value={form.date} onChange={(e) => set('date', e.target.value)} />
+            <input id="qf-date" className="qf-input" type="date" min={today()} value={form.date} onChange={(e) => set('date', e.target.value)} />
           </Field>
           <div className="qf-grid-2">
             <Field label={t.name} error={errors.name} htmlFor="qf-name">
               <input id="qf-name" className="qf-input" autoComplete="name" value={form.name} onChange={(e) => set('name', e.target.value)} />
             </Field>
             <Field label={t.phone} error={errors.phone} htmlFor="qf-phone">
-              <input id="qf-phone" className="qf-input" type="tel" autoComplete="tel" value={form.phone} onChange={(e) => set('phone', e.target.value)} />
+              <input id="qf-phone" className="qf-input" type="tel" inputMode="tel" autoComplete="tel" value={form.phone} onChange={(e) => set('phone', e.target.value)} />
             </Field>
           </div>
           <Field label={t.email} error={errors.email} htmlFor="qf-email">
-            <input id="qf-email" className="qf-input" type="email" autoComplete="email" value={form.email} onChange={(e) => set('email', e.target.value)} />
+            <input id="qf-email" className="qf-input" type="email" inputMode="email" autoComplete="email" value={form.email} onChange={(e) => set('email', e.target.value)} />
           </Field>
           <fieldset className="qf-fieldset">
             <legend>{t.prefer}</legend>
@@ -235,6 +296,9 @@ export default function QuoteForm({ lang, currentYear }: Props) {
             </div>
             {errors.prefer && <span className="qf-err">{errors.prefer}</span>}
           </fieldset>
+          <p className="qf-consent">
+            {t.consent} <a href={privacyHref}>{CONTENT[lang].footer.privacy}</a>.
+          </p>
         </div>
       )}
 
@@ -245,9 +309,11 @@ export default function QuoteForm({ lang, currentYear }: Props) {
           <button type="button" className="btn btn-ghost" onClick={back}>{t.back}</button>
         ) : <span />}
         {step < 2 ? (
-          <button type="button" className="btn btn-amber" onClick={next}>{t.next}</button>
+          // Distinct keys: if React reused this node, the click on "Next" would land
+          // on a type="submit" button and submit (and validate) step 3 immediately.
+          <button key="next" type="button" className="btn btn-amber" onClick={next}>{t.next}</button>
         ) : (
-          <button type="submit" className="btn btn-amber" disabled={status === 'sending'}>
+          <button key="submit" type="submit" className="btn btn-amber" disabled={status === 'sending'}>
             {status === 'sending' ? t.sending : t.submit}
           </button>
         )}
@@ -259,21 +325,21 @@ export default function QuoteForm({ lang, currentYear }: Props) {
 
 function Field({ label, error, htmlFor, children }: { label: string; error?: string; htmlFor: string; children: React.ReactNode }) {
   return (
-    <label className="qf-field" htmlFor={htmlFor}>
-      <span className="qf-label">{label}</span>
-      <span className="qf-control">{children}</span>
-      {error && <span className="qf-err">{error}</span>}
-    </label>
+    <div className="qf-field">
+      <label className="qf-label" htmlFor={htmlFor}>{label}</label>
+      <div className="qf-control">{children}</div>
+      {error && <span className="qf-err" role="alert">{error}</span>}
+    </div>
   );
 }
 
 function Suggestions({ items, show, onPick }: { items: string[]; show: boolean; onPick: (v: string) => void }) {
   if (!show || items.length === 0) return null;
   return (
-    <ul className="qf-suggest" role="listbox">
+    <ul className="qf-suggest">
       {items.map((it) => (
         <li key={it}>
-          <button type="button" onMouseDown={() => onPick(it)}>{it}</button>
+          <button type="button" onMouseDown={(e) => { e.preventDefault(); onPick(it); }}>{it}</button>
         </li>
       ))}
     </ul>

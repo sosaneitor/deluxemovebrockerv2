@@ -4,25 +4,29 @@ import { CONTENT, CONTACT, type Lang } from '../i18n/content';
 
 interface Props {
   lang: Lang;
+  /** URL of this same page in the other language (defaults to the other home). */
+  altHref?: string;
 }
-const { lang } = Astro.props;
+const { lang, altHref } = Astro.props;
 const t = CONTENT[lang].nav;
-const otherLangHref = lang === 'es' ? '/' : '/es/';
+const home = lang === 'es' ? '/es/' : '/';
+const otherLangHref = altHref ?? (lang === 'es' ? '/' : '/es/');
 const otherLangLabel = lang === 'es' ? 'EN' : 'ES';
 
 const links = [
-  { href: '#services', label: t.services },
-  { href: '#how', label: t.how },
-  { href: '#why', label: t.why },
-  { href: '#pricing', label: t.pricing },
-  { href: '#reviews', label: t.reviews },
-  { href: '#faq', label: t.faq },
+  { href: `${home}#services`, label: t.services },
+  { href: `${home}#how`, label: t.how },
+  { href: `${home}#why`, label: t.why },
+  { href: `${home}#pricing`, label: t.pricing },
+  { href: `${home}#reviews`, label: t.reviews },
+  { href: `${home}#faq`, label: t.faq },
 ];
 ---
 
+<div class="scroll-progress" data-progress aria-hidden="true"></div>
 <header class="site-header" id="site-header">
   <div class="shell header-inner">
-    <a href={lang === 'es' ? '/es/' : '/'} class="header-logo" aria-label="Deluxe Move Broker — home">
+    <a href={home} class="header-logo" aria-label="Deluxe Move Broker — home">
       <Logo />
     </a>
 
@@ -32,16 +36,13 @@ const links = [
 
     <div class="header-actions">
       <a href={otherLangHref} class="lang-switch" aria-label={`Switch to ${otherLangLabel}`}>{otherLangLabel}</a>
-      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" class="i-sun">
-          <circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.8" />
-          <path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+      <a href={CONTACT.phoneHref} class="header-call" aria-label={`${t.call} ${CONTACT.phone}`}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
         </svg>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" class="i-moon">
-          <path d="M20 13.5A8 8 0 1 1 10.5 4a6.5 6.5 0 0 0 9.5 9.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
-        </svg>
-      </button>
-      <a href="#quote" class="btn btn-amber header-cta">{t.quote}</a>
+        <span class="header-call-num">{CONTACT.phone}</span>
+      </a>
+      <a href={`${home}#quote`} class="btn btn-amber header-cta">{t.quote}</a>
       <button type="button" class="menu-btn" id="menu-btn" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
         <span></span><span></span><span></span>
       </button>
@@ -51,7 +52,7 @@ const links = [
   <div class="mobile-menu" id="mobile-menu" hidden>
     <nav class="shell" aria-label="Mobile">
       {links.map((l) => <a href={l.href} data-close>{l.label}</a>)}
-      <a href="#quote" class="btn btn-amber btn-full" data-close>{t.quote}</a>
+      <a href={`${home}#quote`} class="btn btn-amber btn-full" data-close>{t.quote}</a>
       <div class="mobile-contact">
         <a href={CONTACT.phoneHref}>{CONTACT.phone}</a>
         <a href={otherLangHref}>{otherLangLabel === 'ES' ? 'Español' : 'English'}</a>
@@ -65,8 +66,11 @@ const links = [
     position: fixed;
     inset: 0 0 auto 0;
     z-index: 50;
-    transition: background-color 0.3s, border-color 0.3s, backdrop-filter 0.3s;
+    transition: background-color 0.3s, border-color 0.3s, backdrop-filter 0.3s, transform 0.45s var(--ease-signature);
     border-bottom: 1px solid transparent;
+  }
+  .site-header.is-hidden {
+    transform: translateY(-100%);
   }
   .site-header.scrolled {
     background: color-mix(in srgb, var(--bg) 82%, transparent);
@@ -80,6 +84,15 @@ const links = [
     gap: 1rem;
     min-height: 68px;
     padding-top: env(safe-area-inset-top);
+  }
+  .header-logo :global(.logo) {
+    height: 32px;
+    width: auto;
+  }
+  @media (min-width: 768px) {
+    .header-logo :global(.logo) {
+      height: 40px;
+    }
   }
   .header-nav {
     display: none;
@@ -114,29 +127,26 @@ const links = [
     border-color: var(--color-amber);
     color: var(--color-amber);
   }
-  .theme-toggle {
-    display: grid;
-    place-items: center;
-    width: 40px;
+  .header-call {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-width: 40px;
     height: 40px;
+    padding-inline: 0.65rem;
     border-radius: var(--radius-full);
     border: 1px solid var(--line);
-    background: transparent;
-    color: var(--fg);
-    cursor: pointer;
-  }
-  .theme-toggle:hover {
-    border-color: var(--color-amber);
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    font-weight: 600;
     color: var(--color-amber);
   }
-  .i-moon {
-    display: none;
+  .header-call:hover {
+    border-color: var(--color-amber);
   }
-  :global(:root[data-theme='light']) .i-sun {
+  .header-call-num {
     display: none;
-  }
-  :global(:root[data-theme='light']) .i-moon {
-    display: block;
   }
   .header-cta {
     display: none;
@@ -194,15 +204,26 @@ const links = [
     color: var(--fg-dim);
     font-size: var(--text-sm);
   }
+  .header-nav a {
+    white-space: nowrap;
+  }
   @media (min-width: 900px) {
-    .header-nav {
-      display: flex;
-    }
     .header-cta {
       display: inline-flex;
     }
+  }
+  /* Full nav only where all six links fit on one line (ES labels are the longest). */
+  @media (min-width: 1100px) {
+    .header-nav {
+      display: flex;
+    }
     .menu-btn {
       display: none;
+    }
+  }
+  @media (min-width: 1280px) {
+    .header-call-num {
+      display: inline;
     }
   }
 </style>
@@ -210,21 +231,17 @@ const links = [
 <script>
   // Header scroll state
   const header = document.getElementById('site-header');
-  const onScroll = () => header?.classList.toggle('scrolled', window.scrollY > 24);
+  // Solid after a little scroll; slides away while scrolling down, returns on scroll up.
+  let lastY = window.scrollY;
+  const onScroll = () => {
+    const y = window.scrollY;
+    header?.classList.toggle('scrolled', y > 24);
+    const menuOpen = !document.getElementById('mobile-menu')?.hidden;
+    header?.classList.toggle('is-hidden', y > lastY && y > 400 && !menuOpen);
+    lastY = y;
+  };
   onScroll();
   window.addEventListener('scroll', onScroll, { passive: true });
-
-  // Theme toggle
-  const toggle = document.getElementById('theme-toggle');
-  toggle?.addEventListener('click', () => {
-    const root = document.documentElement;
-    const isLight = root.dataset.theme === 'light';
-    const next = isLight ? 'dark' : 'light';
-    root.dataset.theme = next;
-    try {
-      localStorage.setItem('theme', next);
-    } catch (e) {}
-  });
 
   // Mobile menu
   const menuBtn = document.getElementById('menu-btn');

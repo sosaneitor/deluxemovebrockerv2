@@ -1,0 +1,12 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PrivacyPage from '../components/PrivacyPage.astro';
+import { CONTENT } from '../i18n/content';
+
+const lang = 'en' as const;
+const t = CONTENT[lang].privacy;
+---
+
+<BaseLayout lang={lang} title={`${t.title} | Deluxe Move Broker`} description={t.description} paths={{ en: '/privacy/', es: '/es/privacidad/' }}>
+  <PrivacyPage lang={lang} currentYear={new Date().getFullYear()} />
+</BaseLayout>

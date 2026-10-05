@@ -1,30 +1,34 @@
 ---
+import '@fontsource-variable/inter';
+import '@fontsource-variable/space-grotesk';
 import '../styles/global.css';
+import { CONTACT } from '../i18n/content';
 
 export interface Props {
   lang: 'en' | 'es';
   title: string;
   description: string;
-  /** path without locale prefix, e.g. '' for home */
-  path?: string;
+  /** Absolute paths of this page in each locale (for canonical + hreflang). */
+  paths?: { en: string; es: string };
+  /** Keep the page out of search results (e.g. 404). */
+  noindex?: boolean;
 }
 
-const { lang, title, description, path = '' } = Astro.props;
+const { lang, title, description, paths = { en: '/', es: '/es/' }, noindex = false } = Astro.props;
 const site = Astro.site?.toString().replace(/\/$/, '') ?? '';
 
-const canonical = lang === 'es' ? `${site}/es/${path}` : `${site}/${path}`;
-const cleanCanonical = canonical.replace(/\/+$/, '/');
+const cleanCanonical = `${site}${paths[lang]}`;
 
 const alternates = [
-  { hreflang: 'en-US', href: `${site}/` },
-  { hreflang: 'es-US', href: `${site}/es/` },
-  { hreflang: 'x-default', href: `${site}/` },
+  { hreflang: 'en-US', href: `${site}${paths.en}` },
+  { hreflang: 'es-US', href: `${site}${paths.es}` },
+  { hreflang: 'x-default', href: `${site}${paths.en}` },
 ];
 
 const ogImage = `${site}/og-image.jpg`;
 
 // ---- Structured data ----
-const phone = '+17862667459';
+const phone = CONTACT.phoneHref.replace('tel:', '');
 const localBusiness = {
   '@context': 'https://schema.org',
   '@type': 'MovingCompany',
@@ -32,8 +36,11 @@ const localBusiness = {
   description,
   url: `${site}/`,
   telephone: phone,
+  email: CONTACT.email,
   image: ogImage,
+  logo: `${site}/apple-touch-icon.png`,
   priceRange: '$$',
+  openingHours: CONTACT.openingHours,
   areaServed: { '@type': 'Country', name: 'United States' },
   address: {
     '@type': 'PostalAddress',
@@ -69,7 +76,7 @@ const website = {
     {alternates.map((a) => <link rel="alternate" hreflang={a.hreflang} href={a.href} />)}
 
     <!-- Icons -->
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.png" type="image/png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="theme-color" content="#0b0d10" />
 
@@ -91,13 +98,7 @@ const website = {
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
 
-    <!-- Fonts: preconnect + swap, subset latin -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap"
-    />
+    {noindex && <meta name="robots" content="noindex" />}
 
     <!-- Reveal contract: add class ASAP so pre-JS content is not hidden if JS never runs -->
     <script is:inline>
@@ -105,11 +106,6 @@ const website = {
       if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         document.documentElement.classList.add('gsap-ready');
       }
-      // Restore theme preference before paint (no flash).
-      try {
-        const t = localStorage.getItem('theme');
-        if (t) document.documentElement.dataset.theme = t;
-      } catch (e) {}
     </script>
 
     <script type="application/ld+json" is:inline set:html={JSON.stringify(localBusiness)} />
