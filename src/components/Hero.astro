@@ -97,24 +97,74 @@ const heroAlt =
     object-fit: cover;
     object-position: 70% center;
   }
-  /* Veil: darken left (where copy sits) + fade into page at the bottom. */
+  /* Veil. Desktop: darken the left (where copy sits) and fade into the page at the bottom. */
   .hero-veil {
     position: absolute;
     inset: 0;
-    /* Mobile: copy spans the full width, so darken top-to-bottom. */
-    background: linear-gradient(
-      to bottom,
-      color-mix(in srgb, var(--bg) 82%, transparent) 0%,
-      color-mix(in srgb, var(--bg) 55%, transparent) 50%,
-      var(--bg) 97%
-    );
+    background:
+      linear-gradient(105deg, var(--bg) 8%, color-mix(in srgb, var(--bg) 55%, transparent) 42%, transparent 68%),
+      linear-gradient(to bottom, transparent 45%, var(--bg) 97%);
     pointer-events: none;
   }
-  @media (min-width: 768px) {
+
+  /* Phones: a 16:9 photo behind a tall column of text only shows a sliver of the cab and
+     the copy covers the road. Instead the photo becomes a panoramic band placed right
+     under the CTAs (inside the first screen), where the whole truck, its lights and the
+     road effects are visible; the stats sit on the band's faded lower edge. */
+  @media (max-width: 767px) {
+    .hero {
+      min-height: auto;
+      flex-direction: column;
+      align-items: stretch;
+      padding-top: 6.25rem;
+      padding-bottom: 2.5rem;
+      background: radial-gradient(120% 50% at 85% 0%, color-mix(in srgb, var(--color-amber) 14%, transparent), transparent 60%);
+    }
+    /* Let the copy blocks and the photo band share one flex column so they can be ordered. */
+    .hero-inner {
+      display: contents;
+    }
+    .hero-inner > * {
+      position: relative;
+      z-index: 1;
+      margin-inline: clamp(1.15rem, 4vw, 3rem);
+    }
+    .hero-canvas-wrap {
+      position: relative;
+      inset: auto;
+      order: 5;
+      height: 86vw;
+      margin-top: 1.25rem;
+      margin-bottom: -4.5rem;
+      overflow: hidden;
+    }
+    /* .hero prefix: these must beat the base .hero-stats rules defined further down. */
+    .hero .hero-stats {
+      order: 6;
+      flex-wrap: nowrap;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-top: 0;
+      padding-top: 1.25rem;
+    }
+    .hero-photo {
+      object-position: 80% center;
+    }
+    .hero-poster {
+      display: none;
+    }
+    /* Above the light layer here, so streaks fade out under the stats like the photo does. */
     .hero-veil {
-      background:
-        linear-gradient(105deg, var(--bg) 8%, color-mix(in srgb, var(--bg) 55%, transparent) 42%, transparent 68%),
-        linear-gradient(to bottom, transparent 45%, var(--bg) 97%);
+      z-index: 1;
+      background: linear-gradient(
+        to bottom,
+        var(--bg) 0%,
+        color-mix(in srgb, var(--bg) 40%, transparent) 18%,
+        transparent 38%,
+        transparent 62%,
+        color-mix(in srgb, var(--bg) 70%, transparent) 82%,
+        var(--bg) 100%
+      );
     }
   }
   .hero-inner {

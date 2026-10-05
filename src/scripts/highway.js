@@ -2,12 +2,11 @@
 // the truck's own headlights breathe and flare, its amber marker lights chase, the lane
 // line and the lit asphalt stream toward the camera, and distant traffic comes on.
 // Every effect is placed in the photo's pixel coordinates and mapped through the same
-// object-fit: cover / object-position: 70% math the <img> uses, so it stays glued to the
+// object-fit: cover / object-position math the <img> uses, so it stays glued to the
 // truck at any viewport size. Pure decoration (canvas is aria-hidden).
 
 const IMG_W = 1672;
 const IMG_H = 941;
-const POS_X = 0.7; // must match .hero-photo { object-position: 70% center }
 
 // Feature coordinates measured on the source photo.
 const HEADLIGHTS = [
@@ -77,9 +76,10 @@ export function initHighway(canvas) {
   if (!ctx) return;
 
   const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-  // On phones the copy spans the whole hero and covers the road, so only the truck's own
-  // lights animate there (road streaks would run straight through the text).
-  const roadFx = !window.matchMedia('(max-width: 767px)').matches;
+  // Read the photo's horizontal object-position (70% desktop, 80% phones) so the
+  // overlay uses exactly the same crop as the <img>.
+  const photo = canvas.parentElement?.querySelector('.hero-photo');
+  let posX = 0.7;
   let w = 0;
   let h = 0;
   let k = 1; // photo px → CSS px
@@ -92,8 +92,12 @@ export function initHighway(canvas) {
     canvas.width = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (photo) {
+      const pos = parseFloat(getComputedStyle(photo).objectPosition);
+      if (!Number.isNaN(pos)) posX = pos / 100;
+    }
     k = Math.max(w / IMG_W, h / IMG_H);
-    ox = (w - IMG_W * k) * POS_X;
+    ox = (w - IMG_W * k) * posX;
     oy = (h - IMG_H * k) * 0.5;
   }
   const X = (x) => ox + x * k;
@@ -156,7 +160,7 @@ export function initHighway(canvas) {
     const len = Math.hypot(dx, dy);
     const nx = -dy / len;
     const ny = dx / len;
-    for (const s of roadFx ? sheens : []) {
+    for (const s of sheens) {
       s.t += s.speed * dt;
       if (s.t > 1) s.t -= 1;
       const p = s.t * s.t; // accelerate as it nears the camera
@@ -179,7 +183,7 @@ export function initHighway(canvas) {
     }
 
     // 2 · Lane dashes rushing past along the real lane line.
-    for (const d of roadFx ? dashes : []) {
+    for (const d of dashes) {
       d.t += 0.0042 * dt;
       if (d.t > 1) d.t -= 1;
       const s = Math.pow(d.t, 2.2);
